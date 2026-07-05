@@ -1,4 +1,4 @@
-﻿name: Run Data Sync
+name: Run Data Sync
 
 on:
   workflow_dispatch:
@@ -21,7 +21,7 @@ on:
 
 env:
   # please change to your own config.
-  RUN_TYPE: coros # support strava/nike/garmin/garmin_cn/keep/only_gpx/only_fit/nike_to_strava/strava_to_garmin/strava_to_garmin_cn/garmin_to_strava/garmin_to_strava_cn/codoon, Please change the 'pass' it to your own
+  RUN_TYPE: coros # support strava/nike/garmin/garmin_cn/keep/only_gpx/only_fit/nike_to_strava/strava_to_garmin/strava_to_garmin_cn/garmin_to_strava/garmin_to_strava_cn/codoon, Please change the 'pass[...]
   GITHUB_NAME: aimdotsh  # change to yours
   GITHUB_EMAIL: liups@liups.com # change to yours
 
@@ -32,7 +32,7 @@ env:
   IGNORE_RANGE: 0 # Unit meter
   SAVE_DATA_IN_GITHUB_CACHE: false # if you deploy in the vercal, check the README
   DATA_CACHE_PREFIX: 'track_data'
-  BUILD_GH_PAGES: true # If you do not need GitHub Page please set it to `false`
+  BUILD_GH_PAGES: false # If you do not need GitHub Page please set it to `false`
 
 jobs:
   sync:
@@ -138,22 +138,22 @@ jobs:
       - name: Run sync Strava to Garmin(Run with strava(or others upload to strava) data backup in Garmin)
         if: env.RUN_TYPE == 'strava_to_garmin'
         run: |
-          python run_page/strava_to_garmin_sync.py ${{ secrets.STRAVA_CLIENT_ID }} ${{ secrets.STRAVA_CLIENT_SECRET }} ${{ secrets.STRAVA_CLIENT_REFRESH_TOKEN }}  ${{ secrets.GARMIN_SECRET_STRING }} ${{ secrets.STRAVA_EMAIL }} ${{ secrets.STRAVA_PASSWORD }} ${{ secrets.STRAVA_JWT }} 
+          python run_page/strava_to_garmin_sync.py ${{ secrets.STRAVA_CLIENT_ID }} ${{ secrets.STRAVA_CLIENT_SECRET }} ${{ secrets.STRAVA_CLIENT_REFRESH_TOKEN }}  ${{ secrets.GARMIN_SECRET_STRING }} $[...] 
 
       - name: Run sync Strava to Garmin-cn(Run with strava(or others upload to strava) data backup in Garmin-cn)
         if: env.RUN_TYPE == 'strava_to_garmin_cn'
         run: |
-          python run_page/strava_to_garmin_sync.py ${{ secrets.STRAVA_CLIENT_ID }} ${{ secrets.STRAVA_CLIENT_SECRET }} ${{ secrets.STRAVA_CLIENT_REFRESH_TOKEN }}  ${{ secrets.GARMIN_SECRET_STRING_CN }} ${{ secrets.STRAVA_EMAIL }} ${{ secrets.STRAVA_PASSWORD }} ${{ secrets.STRAVA_JWT }} --is-cn --use_fake_garmin_device
+          python run_page/strava_to_garmin_sync.py ${{ secrets.STRAVA_CLIENT_ID }} ${{ secrets.STRAVA_CLIENT_SECRET }} ${{ secrets.STRAVA_CLIENT_REFRESH_TOKEN }}  ${{ secrets.GARMIN_SECRET_STRING_CN }... 
 
       - name: Run sync Garmin-cn to Strava(Run with Garmin data backup in Strava)
         if: env.RUN_TYPE == 'garmin_to_strava_cn'
         run: |
-          python run_page/garmin_to_strava_sync.py ${{ secrets.STRAVA_CLIENT_ID }} ${{ secrets.STRAVA_CLIENT_SECRET }} ${{ secrets.STRAVA_CLIENT_REFRESH_TOKEN }}  ${{ secrets.GARMIN_SECRET_STRING_CN }}  --is-cn
+          python run_page/garmin_to_strava_sync.py ${{ secrets.STRAVA_CLIENT_ID }} ${{ secrets.STRAVA_CLIENT_SECRET }} ${{ secrets.STRAVA_CLIENT_REFRESH_TOKEN }}  ${{ secrets.GARMIN_SECRET_STRING_CN }... 
 
       - name: Run sync Garmin to Strava(Run with Garmin data backup in Strava)
         if: env.RUN_TYPE == 'garmin_to_strava'
         run: |
-          python run_page/garmin_to_strava_sync.py ${{ secrets.STRAVA_CLIENT_ID }} ${{ secrets.STRAVA_CLIENT_SECRET }} ${{ secrets.STRAVA_CLIENT_REFRESH_TOKEN }}  ${{ secrets.GARMIN_EMAIL }} ${{ secrets.GARMIN_PASSWORD }}
+          python run_page/garmin_to_strava_sync.py ${{ secrets.STRAVA_CLIENT_ID }} ${{ secrets.STRAVA_CLIENT_SECRET }} ${{ secrets.STRAVA_CLIENT_REFRESH_TOKEN }}  ${{ secrets.GARMIN_EMAIL }} ${{ secre... 
 
       - name: Run sync Tulipsport script
         if: env.RUN_TYPE == 'tulipsport'
@@ -170,7 +170,7 @@ jobs:
           git push || echo "nothing to push"
 
   publish_github_pages:
-    if: needs.sync.result == 'success' && vars.BUILD_GH_PAGES != 'false'
+    if: false
     name: Build and publish Github Pages
     uses: ./.github/workflows/gh-pages.yml
     with:
