@@ -8,7 +8,7 @@
 locale: en
 
 # 默认主题：system（跟随系统）| light（浅色）| dark（深色）
-theme: dark
+theme: light
 
 # ── 运动目标 ──────────────────────────────────────────────────────────────────
 # unit: distance → 单位 km
@@ -16,26 +16,26 @@ theme: dark
 
 goals:
   all:
-    yearly: 2500
-    monthly: 150
-    weekly: 35
+    yearly: 2000
+    monthly: 100
+    weekly: 30
     unit: distance
 
   Run:
-    yearly: 1200
-    monthly: 100
-    weekly: 25
-    unit: distance
-
-  Ride:
-    yearly: 1000
+    yearly: 1800
     monthly: 80
     weekly: 20
     unit: distance
 
+  Ride:
+    yearly: 100
+    monthly: 10
+    weekly: 20
+    unit: distance
+
   Hike:
-    yearly: 300
-    monthly: 25
+    yearly: 100
+    monthly: 10
     weekly: 6
     unit: distance
 
@@ -52,5 +52,5 @@ goals:
 githubClientId: 'Ov23liIA4gcZ3hXZkJnP'
 
 # 打卡数据存储位置（当前 repo），格式：username/repo-name
-repoOwner: 'zhaohongxuan'
+repoOwner: 'aimdotsh'
 repoName: 'workouts'
