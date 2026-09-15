@@ -12,6 +12,7 @@ import { AnalyticsPage } from './components/Analytics/AnalyticsPage'
 import { DashboardTheme } from './themes/DashboardTheme'
 import rawActivities from './static/activities.json'
 import siteMetadata from './static/site-metadata'
+import { formatActivityShareMeta, updatePageShareMeta } from './utils/shareMeta'
 
 const activities = rawActivities as Activity[]
 
@@ -42,16 +43,26 @@ export default function App() {
   useEffect(() => {
     const params = new URLSearchParams(window.location.search)
     const runId = params.get('run_id')
+    const defaultSiteTitle = siteMetadata.siteTitle || '蓝皮书的 Workouts Page'
+    const defaultDesc = '蓝皮书的户外运动与体能数据看板，记录跑步、骑行、徒步等运动轨迹、配速与心率详情。'
+
     if (runId && activities.length > 0) {
       const act = activities.find((a: Activity) => String(a.run_id) === runId)
       if (act) {
         setShareActivity(act)
-        const kmStr = (act.distance / 1000).toFixed(2)
-        document.title = `${kmStr} km ${act.name || act.type} | ${siteMetadata.siteTitle || 'Workouts'}`
+        const { title, description } = formatActivityShareMeta(act, defaultSiteTitle)
+        updatePageShareMeta({
+          title,
+          description,
+        })
         return
       }
     }
-    document.title = siteMetadata.siteTitle || '蓝皮书的 Workouts Page'
+
+    updatePageShareMeta({
+      title: defaultSiteTitle,
+      description: defaultDesc,
+    })
   }, [activities])
 
   return (
@@ -80,6 +91,10 @@ export default function App() {
             onBack={() => {
               setShareActivity(null)
               window.history.pushState({}, '', window.location.pathname)
+              updatePageShareMeta({
+                title: siteMetadata.siteTitle || '蓝皮书的 Workouts Page',
+                description: '蓝皮书的户外运动与体能数据看板，记录跑步、骑行、徒步等运动轨迹、配速与心率详情。',
+              })
             }}
           />
         ) : page === 'analytics' ? (
