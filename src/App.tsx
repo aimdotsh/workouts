@@ -12,7 +12,7 @@ import { AnalyticsPage } from './components/Analytics/AnalyticsPage'
 import { DashboardTheme } from './themes/DashboardTheme'
 import rawActivities from './static/activities.json'
 import siteMetadata from './static/site-metadata'
-import { formatActivityShareMeta, updatePageShareMeta } from './utils/shareMeta'
+import { formatActivityShareMeta, updatePageShareMeta, generateTrackThumbnail } from './utils/shareMeta'
 
 const activities = rawActivities as Activity[]
 
@@ -51,9 +51,11 @@ export default function App() {
       if (act) {
         setShareActivity(act)
         const { title, description } = formatActivityShareMeta(act, defaultSiteTitle)
+        const trackThumb = generateTrackThumbnail(act)
         updatePageShareMeta({
           title,
           description,
+          image: trackThumb || '/favicon.png',
         })
         return
       }
