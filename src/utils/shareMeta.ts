@@ -9,17 +9,14 @@ export function formatActivityShareMeta(act: Activity, siteTitle = '蓝皮书的
   const sportName = act.type === 'Run' ? '跑步'
     : act.type === 'Ride' ? '骑行'
     : act.type === 'Hike' ? '徒步' : '运动'
-  const sportIcon = act.type === 'Run' ? '🏃'
-    : act.type === 'Ride' ? '🚴'
-    : act.type === 'Hike' ? '🥾' : '👟'
 
-  const title = `${kmStr} km ${act.name || act.type} | ${siteTitle}`
+  const title = `${kmStr}km ${act.name || sportName} | ${siteTitle}`
 
-  // 1. 仅显示纯日期 (YYYY-MM-DD)，不显示小时分钟
+  // 1. 纯日期 (YYYY-MM-DD)
   const dateOnly = (act.start_date_local || '').slice(0, 10)
   const fullDt = (act.start_date_local || '').slice(0, 16)
 
-  // 2. 运动用时
+  // 2. 运动用时：格式化为紧凑的 mm:ss 或 h:mm:ss
   let durStr = ''
   if (act.moving_time) {
     const rawTime = String(act.moving_time)
@@ -28,13 +25,22 @@ export function formatActivityShareMeta(act: Activity, siteTitle = '蓝皮书的
       const h = parts[0] || 0
       const m = parts[1] || 0
       const s = Math.round(parts[2] || 0)
-      durStr = h > 0 ? `${h}小时${m}分` : `${m}分${s}秒`
+      if (h > 0) {
+        durStr = `${h}:${m < 10 ? '0' : ''}${m}:${s < 10 ? '0' : ''}${s}`
+      } else {
+        durStr = `${m}:${s < 10 ? '0' : ''}${s}`
+      }
     } else {
       const sec = Number(rawTime)
       if (!isNaN(sec) && sec > 0) {
-        const m = Math.floor(sec / 60)
-        const s = sec % 60
-        durStr = `${m}分${s}秒`
+        const h = Math.floor(sec / 3600)
+        const m = Math.floor((sec % 3600) / 60)
+        const s = Math.floor(sec % 60)
+        if (h > 0) {
+          durStr = `${h}:${m < 10 ? '0' : ''}${m}:${s < 10 ? '0' : ''}${s}`
+        } else {
+          durStr = `${m}:${s < 10 ? '0' : ''}${s}`
+        }
       }
     }
   }
@@ -52,45 +58,47 @@ export function formatActivityShareMeta(act: Activity, siteTitle = '蓝皮书的
     }
   }
 
-  // 4. 平均心率
-  const hrStr = act.average_heartrate ? `心率 ${Math.round(act.average_heartrate)} bpm` : ''
+  // 4. 平均心率 (去掉 bpm 节省字符空间)
+  const hrStr = act.average_heartrate ? `心率 ${Math.round(act.average_heartrate)}` : ''
 
   // 5. 累计爬升
   const elevStr = act.elevation_gain && act.elevation_gain > 0 ? `爬升 ${Math.round(act.elevation_gain)}m` : ''
 
-  // 6. 天气推断：先从活动名称识别，若无则根据时段推断自然天气情景
+  // 6. 天气推断 (纯文本不带大 Emoji，保证单行完整呈现)
   let weather = ''
   const nameLower = (act.name || '').toLowerCase()
-  if (nameLower.includes('雨')) weather = '🌧️ 雨天'
-  else if (nameLower.includes('雪')) weather = '❄️ 雪天'
-  else if (nameLower.includes('晴')) weather = '☀️ 晴朗'
-  else if (nameLower.includes('阴')) weather = '☁️ 阴天'
-  else if (nameLower.includes('云')) weather = '⛅ 多云'
-  else if (nameLower.includes('风')) weather = '💨 微风'
-  else if (nameLower.includes('凉')) weather = '🍃 凉爽'
-  else if (nameLower.includes('热')) weather = '🔥 偏热'
+  if (nameLower.includes('雨')) weather = '雨天'
+  else if (nameLower.includes('雪')) weather = '雪天'
+  else if (nameLower.includes('晴')) weather = '晴'
+  else if (nameLower.includes('阴')) weather = '阴'
+  else if (nameLower.includes('云')) weather = '多云'
+  else if (nameLower.includes('风')) weather = '微风'
+  else if (nameLower.includes('凉')) weather = '凉爽'
+  else if (nameLower.includes('热')) weather = '偏热'
   else if (fullDt.length >= 13) {
     const hour = parseInt(fullDt.slice(11, 13), 10)
-    if (hour >= 5 && hour < 9) weather = '🌅 清晨微风'
-    else if (hour >= 9 && hour < 12) weather = '☀️ 上午晴好'
-    else if (hour >= 12 && hour < 17) weather = '🌤️ 午后舒适'
-    else if (hour >= 17 && hour < 19) weather = '🌇 傍晚微风'
-    else if (hour >= 19 && hour <= 23) weather = '🌙 夜晚凉爽'
-    else weather = '🌌 凌晨清爽'
+    if (hour >= 5 && hour < 9) weather = '晨风'
+    else if (hour >= 9 && hour < 12) weather = '上午晴好'
+    else if (hour >= 12 && hour < 17) weather = '午后舒适'
+    else if (hour >= 17 && hour < 19) weather = '傍晚微风'
+    else if (hour >= 19 && hour <= 23) weather = '夜晚凉爽'
+    else weather = '凌晨清爽'
   }
 
-  // 第一行：纯日期与运动类型及里程 (时间只显示日期)
+  // 第一行：纯日期与运动类型及里程（紧凑无多余空格与Emoji，绝对不产生意外换行）
+  // 示例：2026-09-15 · 跑步 5.20km
   const line1 = [
-    dateOnly ? `📅 ${dateOnly}` : null,
-    `${sportIcon} ${sportName} ${kmStr} km`,
+    dateOnly || null,
+    `${sportName} ${kmStr}km`,
   ].filter(Boolean).join(' · ')
 
-  // 第二行：用时、配速、心率、爬升与天气
+  // 第二行：用时、配速、心率、爬升与天气（紧凑高密度排版，微信气泡内完全不被截断）
+  // 示例：用时 43:41 · 配速 8'23" · 心率 154 · 晨风
   const line2 = [
-    durStr ? `⏱️ 用时 ${durStr}` : null,
-    paceStr ? `⚡ ${paceStr}` : null,
-    hrStr ? `❤️ ${hrStr}` : null,
-    elevStr ? `⛰️ ${elevStr}` : null,
+    durStr ? `用时 ${durStr}` : null,
+    paceStr || null,
+    hrStr || null,
+    elevStr || null,
     weather || null,
   ].filter(Boolean).join(' · ')
 
@@ -101,6 +109,7 @@ export function formatActivityShareMeta(act: Activity, siteTitle = '蓝皮书的
 
 /**
  * 将活动轨迹离屏渲染为 300x300 高清运动轨迹缩略图 (PNG DataURL)，供微信/Safari分享卡片作为右下角缩略图显示
+ * 采用浅白质感背景与鲜明饱满轨迹设计，完美契合微信浅色气泡
  */
 export function generateTrackThumbnail(act: Activity): string | null {
   if (typeof document === 'undefined') return null
@@ -124,18 +133,16 @@ export function generateTrackThumbnail(act: Activity): string | null {
     const ctx = canvas.getContext('2d')
     if (!ctx) return null
 
-    // 1. 高级暗夜蓝黑卡片底色
-    ctx.fillStyle = '#0f172a'
+    // 1. 优雅浅白纯净底色，完美契合微信卡片浅灰底
+    ctx.fillStyle = '#ffffff'
     ctx.fillRect(0, 0, size, size)
 
-    // 2. 柔和居中径向渐变
-    const grad = ctx.createRadialGradient(size / 2, size / 2, 20, size / 2, size / 2, size * 0.7)
-    grad.addColorStop(0, '#1e293b')
-    grad.addColorStop(1, '#0f172a')
-    ctx.fillStyle = grad
-    ctx.fillRect(0, 0, size, size)
+    // 2. 高级微浅灰内描边与圆角边框感
+    ctx.strokeStyle = '#f1f5f9'
+    ctx.lineWidth = 2
+    ctx.strokeRect(1, 1, size - 2, size - 2)
 
-    // 3. 计算 1:1 直角等比居中投影
+    // 3. 计算 1:1 直角等比居中投影 (保留边距)
     const pad = 36
     const scale = Math.min((size - pad * 2) / lngDiff, (size - pad * 2) / latDiff)
     const offX = (size - lngDiff * scale) / 2
@@ -147,23 +154,23 @@ export function generateTrackThumbnail(act: Activity): string | null {
       return [x, y]
     }
 
-    const trackColor = act.type === 'Run' ? '#f97316' : act.type === 'Ride' ? '#3b82f6' : '#10b981'
+    const trackColor = act.type === 'Run' ? '#f97316' : act.type === 'Ride' ? '#2563eb' : '#059669'
+    const glowColor = act.type === 'Run' ? 'rgba(249, 115, 22, 0.18)' : act.type === 'Ride' ? 'rgba(37, 99, 235, 0.18)' : 'rgba(5, 150, 105, 0.18)'
 
-    // 4. 底层高宽容度轨迹光晕
+    // 4. 底层柔和轨迹光晕
     ctx.beginPath()
     coords.forEach((pt, i) => {
       const [x, y] = project(pt)
       if (i === 0) ctx.moveTo(x, y)
       else ctx.lineTo(x, y)
     })
-    ctx.strokeStyle = trackColor
-    ctx.lineWidth = 9
+    ctx.strokeStyle = glowColor
+    ctx.lineWidth = 11
     ctx.lineCap = 'round'
     ctx.lineJoin = 'round'
-    ctx.globalAlpha = 0.35
     ctx.stroke()
 
-    // 5. 中层高亮轨迹主色线
+    // 5. 中层高饱满度主轨迹线
     ctx.beginPath()
     coords.forEach((pt, i) => {
       const [x, y] = project(pt)
@@ -171,11 +178,12 @@ export function generateTrackThumbnail(act: Activity): string | null {
       else ctx.lineTo(x, y)
     })
     ctx.strokeStyle = trackColor
-    ctx.lineWidth = 4.5
-    ctx.globalAlpha = 0.9
+    ctx.lineWidth = 5
+    ctx.lineCap = 'round'
+    ctx.lineJoin = 'round'
     ctx.stroke()
 
-    // 6. 核心高光流光细线
+    // 6. 核心精细流光线，让轨迹立体灵动
     ctx.beginPath()
     coords.forEach((pt, i) => {
       const [x, y] = project(pt)
@@ -183,36 +191,35 @@ export function generateTrackThumbnail(act: Activity): string | null {
       else ctx.lineTo(x, y)
     })
     ctx.strokeStyle = '#ffffff'
-    ctx.lineWidth = 1.8
-    ctx.globalAlpha = 0.95
+    ctx.lineWidth = 1.6
+    ctx.globalAlpha = 0.8
     ctx.stroke()
+    ctx.globalAlpha = 1.0
 
-    // 7. 起点【始】(绿色) 与 终点【终】(红色)
+    // 7. 起点【始】(翠绿) 与 终点【终】(鲜红)
     const startPt = project(coords[0])
     const endPt = project(coords[coords.length - 1])
 
-    ctx.globalAlpha = 1.0
-
-    // 终点外圈光圈与实心点
+    // 终点红色实心标点与光环
     ctx.beginPath()
-    ctx.arc(endPt[0], endPt[1], 6, 0, Math.PI * 2)
-    ctx.fillStyle = 'rgba(239, 68, 68, 0.3)'
+    ctx.arc(endPt[0], endPt[1], 7, 0, Math.PI * 2)
+    ctx.fillStyle = 'rgba(239, 68, 68, 0.25)'
     ctx.fill()
     ctx.beginPath()
-    ctx.arc(endPt[0], endPt[1], 4, 0, Math.PI * 2)
+    ctx.arc(endPt[0], endPt[1], 4.5, 0, Math.PI * 2)
     ctx.fillStyle = '#ef4444'
     ctx.fill()
     ctx.lineWidth = 1.5
     ctx.strokeStyle = '#ffffff'
     ctx.stroke()
 
-    // 起点外圈光圈与实心点
+    // 起点绿色实心标点与光环
     ctx.beginPath()
-    ctx.arc(startPt[0], startPt[1], 6, 0, Math.PI * 2)
-    ctx.fillStyle = 'rgba(16, 185, 129, 0.3)'
+    ctx.arc(startPt[0], startPt[1], 7, 0, Math.PI * 2)
+    ctx.fillStyle = 'rgba(16, 185, 129, 0.25)'
     ctx.fill()
     ctx.beginPath()
-    ctx.arc(startPt[0], startPt[1], 4, 0, Math.PI * 2)
+    ctx.arc(startPt[0], startPt[1], 4.5, 0, Math.PI * 2)
     ctx.fillStyle = '#10b981'
     ctx.fill()
     ctx.lineWidth = 1.5
