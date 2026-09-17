@@ -28,6 +28,10 @@
     </script>
   </head>
   <body>
+    <!-- 微信/朋友圈抓取优先：静态合规首图 (>=300x300, <32KB)，通过 overflow:hidden 隐藏不遮挡 UI -->
+    <div style="width:0;height:0;overflow:hidden;position:absolute;top:0;left:0;">
+      <img src="https://workouts.liups.com/share-cover.png" width="300" height="300" alt="Workouts Share Cover" />
+    </div>
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
   </body>

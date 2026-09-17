@@ -1,10 +1,11 @@
-import { useMemo, useState } from 'react'
+import { useMemo, useState, useRef } from 'react'
 import * as polyline from '@mapbox/polyline'
+import { toPng } from 'html-to-image'
 import type { Activity } from '../types'
 import { formatPace } from '../hooks/useActivities'
 import { MuscleHeatmap, inferMusclesFromItems } from './MuscleHeatmap'
 import { WORKOUT_TYPES } from '../types'
-import { Copy, ArrowLeft, Check, Sparkles } from 'lucide-react'
+import { Copy, ArrowLeft, Check, Sparkles, Image as ImageIcon, X, Download } from 'lucide-react'
 import { generateTrackThumbnail } from '../utils/shareMeta'
 
 interface ShareActivityPageProps {
@@ -21,7 +22,27 @@ function seededRandom(seed: number) {
 
 export function ShareActivityPage({ activity, allActivities, onBack }: ShareActivityPageProps) {
   const [copied, setCopied] = useState(false)
+  const [posterUrl, setPosterUrl] = useState<string | null>(null)
+  const [generating, setGenerating] = useState(false)
+  const posterRef = useRef<HTMLDivElement>(null)
   const trackThumb = useMemo(() => generateTrackThumbnail(activity), [activity])
+
+  // 生成朋友圈高清打卡海报
+  const handleGeneratePoster = async () => {
+    if (!posterRef.current || generating) return
+    try {
+      setGenerating(true)
+      const dataUrl = await toPng(posterRef.current, {
+        pixelRatio: 2,
+        cacheBust: true,
+      })
+      setPosterUrl(dataUrl)
+    } catch (err) {
+      console.error('Failed to generate poster:', err)
+    } finally {
+      setGenerating(false)
+    }
+  }
 
   // 1. 解码并生成 GPS 轨迹 Path (若有)
   const trackData = useMemo(() => {
@@ -166,23 +187,34 @@ export function ShareActivityPage({ activity, allActivities, onBack }: ShareActi
       <div className="w-full max-w-md flex items-center justify-between mb-6 z-20">
         <button
           onClick={onBack}
-          className="px-3.5 py-1.5 rounded-full bg-[var(--color-card)] hover:bg-[var(--color-border)]/40 border border-[var(--color-border)] text-xs font-semibold flex items-center gap-1.5 transition-all active:scale-95 shadow-sm"
+          className="px-3 py-1.5 rounded-full bg-[var(--color-card)] hover:bg-[var(--color-border)]/40 border border-[var(--color-border)] text-xs font-semibold flex items-center gap-1.5 transition-all active:scale-95 shadow-sm cursor-pointer"
         >
           <ArrowLeft className="w-3.5 h-3.5 text-[var(--color-text)]" />
-          <span>返回仪表盘</span>
+          <span>返回</span>
         </button>
 
-        <button
-          onClick={handleCopyShareLink}
-          className="px-4 py-1.5 rounded-full bg-[var(--color-accent)] hover:opacity-90 text-white font-bold text-xs flex items-center gap-1.5 shadow-md transition-all active:scale-95 cursor-pointer"
-        >
-          {copied ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
-          <span>{copied ? '链接已复制！' : '复制微信分享链接'}</span>
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={handleGeneratePoster}
+            disabled={generating}
+            className="px-3.5 py-1.5 rounded-full bg-[var(--color-card)] hover:bg-[var(--color-border)]/40 border border-[var(--color-border)] text-[var(--color-text)] font-semibold text-xs flex items-center gap-1.5 shadow-sm transition-all active:scale-95 cursor-pointer"
+          >
+            <ImageIcon className="w-3.5 h-3.5 text-[var(--color-accent)]" />
+            <span>{generating ? '生成中...' : '打卡海报'}</span>
+          </button>
+
+          <button
+            onClick={handleCopyShareLink}
+            className="px-3.5 py-1.5 rounded-full bg-[var(--color-accent)] hover:opacity-90 text-white font-bold text-xs flex items-center gap-1.5 shadow-md transition-all active:scale-95 cursor-pointer"
+          >
+            {copied ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
+            <span>{copied ? '已复制' : '复制链接'}</span>
+          </button>
+        </div>
       </div>
 
       {/* Main Poster Container (完全自适应亮色与深色 Mode 主题) */}
-      <div className="w-full max-w-md bg-[var(--color-card)] border border-[var(--color-border)] rounded-3xl p-5 shadow-xl space-y-5 relative overflow-hidden transition-colors">
+      <div ref={posterRef} className="w-full max-w-md bg-[var(--color-card)] border border-[var(--color-border)] rounded-3xl p-5 shadow-xl space-y-5 relative overflow-hidden transition-colors">
         {/* 1. 顶部 GPS 轨迹 SVG 展示 (若有) */}
         {trackData ? (
           <div className="relative w-full h-44 flex items-center justify-center bg-[var(--color-bg)]/80 rounded-2xl border border-[var(--color-border)]/60 p-2 overflow-hidden">
@@ -365,6 +397,41 @@ export function ShareActivityPage({ activity, allActivities, onBack }: ShareActi
           <span>蓝皮书的 Workouts Page</span>
         </div>
       </div>
+
+      {/* 朋友圈打卡海报模态弹窗 */}
+      {posterUrl && (
+        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex flex-col items-center justify-center p-4 animate-in fade-in duration-200">
+          <div className="relative max-w-sm w-full bg-[var(--color-card)] rounded-3xl p-4 shadow-2xl flex flex-col items-center max-h-[90vh]">
+            <button
+              onClick={() => setPosterUrl(null)}
+              className="absolute top-3 right-3 p-1.5 rounded-full bg-[var(--color-border)]/40 hover:bg-[var(--color-border)] text-[var(--color-muted)] hover:text-[var(--color-text)] transition-colors cursor-pointer"
+            >
+              <X className="w-4 h-4" />
+            </button>
+
+            <h3 className="text-xs font-bold mb-2.5 text-[var(--color-text)] flex items-center gap-1.5">
+              <span>🎉</span>
+              <span>长按图片即可保存相册或分享朋友圈</span>
+            </h3>
+
+            <div className="overflow-y-auto max-h-[70vh] rounded-2xl border border-[var(--color-border)] shadow-inner w-full flex justify-center bg-[var(--color-bg)] p-1">
+              <img src={posterUrl} alt="Workout Share Poster" className="w-full h-auto rounded-xl object-contain block" />
+            </div>
+
+            <div className="flex items-center justify-between w-full mt-3 pt-2 border-t border-[var(--color-border)]/40 text-xs text-[var(--color-muted)]">
+              <span>📱 长按上图可直接存入相册</span>
+              <a
+                href={posterUrl}
+                download={`workout_${activity.start_date_local.slice(0, 10)}.png`}
+                className="px-3.5 py-1 rounded-full bg-[var(--color-accent)] text-white font-semibold flex items-center gap-1 hover:opacity-90 transition-opacity text-xs"
+              >
+                <Download className="w-3.5 h-3.5" />
+                <span>保存图片</span>
+              </a>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

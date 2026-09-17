@@ -299,12 +299,9 @@ export function updatePageShareMeta({
     thumbContainer.style.position = 'absolute'
     thumbContainer.style.top = '0'
     thumbContainer.style.left = '0'
-    thumbContainer.style.width = '300px'
-    thumbContainer.style.height = '300px'
+    thumbContainer.style.width = '0'
+    thumbContainer.style.height = '0'
     thumbContainer.style.overflow = 'hidden'
-    thumbContainer.style.zIndex = '-9999'
-    thumbContainer.style.pointerEvents = 'none'
-    thumbContainer.style.opacity = '0.01'
 
     const thumbImg = document.createElement('img')
     thumbImg.id = 'wechat-share-thumb'
@@ -313,7 +310,6 @@ export function updatePageShareMeta({
     thumbImg.style.display = 'block'
     thumbImg.style.width = '300px'
     thumbImg.style.height = '300px'
-    thumbImg.style.objectFit = 'contain'
     thumbImg.alt = 'Share Thumbnail'
     thumbContainer.appendChild(thumbImg)
 
