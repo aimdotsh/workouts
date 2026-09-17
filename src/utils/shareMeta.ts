@@ -83,19 +83,7 @@ export function formatActivityShareMeta(act: Activity, siteTitle = '蓝皮书的
     else weather = '凌晨清爽'
   }
 
-  // 微信朋友圈分享卡片仅展示标题 (最多两行)，不展示描述文本。
-  // 将运动用时、配速、心率等核心指标紧凑融入标题，使分享到朋友圈时也能直接完整带上预览信息！
-  // 示例：5.16km Morning Run · 44:33 · 配速 8'38" · 心率 144
-  const mainName = act.name && act.name !== act.type ? act.name : sportName
-  const metricsInTitle = [
-    durStr ? `用时 ${durStr}` : null,
-    paceStr || null,
-    hrStr || null,
-  ].filter(Boolean).join(' · ')
-
-  const title = metricsInTitle
-    ? `${kmStr}km ${mainName} · ${metricsInTitle}`
-    : `${kmStr}km ${mainName} | ${siteTitle}`
+  const title = `${kmStr}km ${act.name || sportName} | ${siteTitle}`
 
   // 第一行：纯日期与运动类型及里程（紧凑无多余空格与Emoji，绝对不产生意外换行）
   // 示例：2026-09-17 · 跑步 5.16km
