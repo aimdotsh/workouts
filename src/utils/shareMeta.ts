@@ -10,8 +10,6 @@ export function formatActivityShareMeta(act: Activity, siteTitle = '蓝皮书的
     : act.type === 'Ride' ? '骑行'
     : act.type === 'Hike' ? '徒步' : '运动'
 
-  const title = `${kmStr}km ${act.name || sportName} | ${siteTitle}`
-
   // 1. 纯日期 (YYYY-MM-DD)
   const dateOnly = (act.start_date_local || '').slice(0, 10)
   const fullDt = (act.start_date_local || '').slice(0, 16)
@@ -85,15 +83,29 @@ export function formatActivityShareMeta(act: Activity, siteTitle = '蓝皮书的
     else weather = '凌晨清爽'
   }
 
+  // 微信朋友圈分享卡片仅展示标题 (最多两行)，不展示描述文本。
+  // 将运动用时、配速、心率等核心指标紧凑融入标题，使分享到朋友圈时也能直接完整带上预览信息！
+  // 示例：5.16km Morning Run · 44:33 · 配速 8'38" · 心率 144
+  const mainName = act.name && act.name !== act.type ? act.name : sportName
+  const metricsInTitle = [
+    durStr ? `用时 ${durStr}` : null,
+    paceStr || null,
+    hrStr || null,
+  ].filter(Boolean).join(' · ')
+
+  const title = metricsInTitle
+    ? `${kmStr}km ${mainName} · ${metricsInTitle}`
+    : `${kmStr}km ${mainName} | ${siteTitle}`
+
   // 第一行：纯日期与运动类型及里程（紧凑无多余空格与Emoji，绝对不产生意外换行）
-  // 示例：2026-09-15 · 跑步 5.20km
+  // 示例：2026-09-17 · 跑步 5.16km
   const line1 = [
     dateOnly || null,
     `${sportName} ${kmStr}km`,
   ].filter(Boolean).join(' · ')
 
   // 第二行：用时、配速、心率、爬升与天气（紧凑高密度排版，微信气泡内完全不被截断）
-  // 示例：用时 43:41 · 配速 8'23" · 心率 154 · 晨风
+  // 示例：用时 44:33 · 配速 8'38" · 心率 144 · 晨风
   const line2 = [
     durStr ? `用时 ${durStr}` : null,
     paceStr || null,
@@ -238,7 +250,7 @@ export function generateTrackThumbnail(act: Activity): string | null {
 export function updatePageShareMeta({
   title,
   description,
-  image = '/favicon.png',
+  image = 'https://workouts.liups.com/apple-touch-icon.png',
 }: {
   title: string
   description: string
@@ -261,7 +273,7 @@ export function updatePageShareMeta({
   // 标准搜索引擎与微信描述
   setMeta('name', 'description', description)
 
-  // Open Graph 规范 (微信、Safari、社交媒体通用)
+  // Open Graph 规范 (微信聊天、朋友圈、Safari 通用)
   setMeta('property', 'og:title', title)
   setMeta('property', 'og:description', description)
   setMeta('property', 'og:type', 'article')
@@ -273,29 +285,55 @@ export function updatePageShareMeta({
   setMeta('name', 'twitter:description', description)
   setMeta('name', 'twitter:image', image)
 
-  // 同步更新 Apple Touch Icon (Safari 提取分享缩略图的核心优先源)
-  const touchIcon = document.querySelector('link[rel="apple-touch-icon"]') as HTMLLinkElement | null
-  if (touchIcon && image) {
-    touchIcon.setAttribute('href', image)
-  }
+  // 微信与 Safari 嗅探优先：确保 DOM 最顶层存在一张标准尺寸（>=300x300）的真实 <img> 标签
+  // 关键：不能使用负坐标（如 left: -9999px 会被微信朋友圈安全机制直接判定为作弊隐藏图抛弃），
+  // 必须位于正常屏幕视口区域 (0, 0) 内，通过底层 z-index 确保不干扰交互与 UI。
+  let thumbContainer = document.getElementById('wechat-share-thumb-wrap') as HTMLDivElement | null
+  if (!thumbContainer) {
+    thumbContainer = document.createElement('div')
+    thumbContainer.id = 'wechat-share-thumb-wrap'
+    thumbContainer.style.position = 'absolute'
+    thumbContainer.style.top = '0'
+    thumbContainer.style.left = '0'
+    thumbContainer.style.width = '300px'
+    thumbContainer.style.height = '300px'
+    thumbContainer.style.overflow = 'hidden'
+    thumbContainer.style.zIndex = '-9999'
+    thumbContainer.style.pointerEvents = 'none'
+    thumbContainer.style.opacity = '0.01'
 
-  // 在 body 中维护一个隐藏的专属嗅探 img 标签，确保 Safari 与微信分析器 100% 提取到轨迹缩略图
-  let thumbImg = document.getElementById('wechat-share-thumb') as HTMLImageElement | null
-  if (!thumbImg) {
-    thumbImg = document.createElement('img')
+    const thumbImg = document.createElement('img')
     thumbImg.id = 'wechat-share-thumb'
-    thumbImg.style.position = 'fixed'
-    thumbImg.style.left = '-9999px'
-    thumbImg.style.top = '-9999px'
+    thumbImg.width = 300
+    thumbImg.height = 300
+    thumbImg.style.display = 'block'
     thumbImg.style.width = '300px'
     thumbImg.style.height = '300px'
-    thumbImg.style.opacity = '0.01'
-    thumbImg.style.pointerEvents = 'none'
-    thumbImg.alt = 'share thumbnail'
-    document.body.appendChild(thumbImg)
+    thumbImg.style.objectFit = 'contain'
+    thumbImg.alt = 'Share Thumbnail'
+    thumbContainer.appendChild(thumbImg)
+
+    if (document.body.firstChild) {
+      document.body.insertBefore(thumbContainer, document.body.firstChild)
+    } else {
+      document.body.appendChild(thumbContainer)
+    }
+  }
+
+  const thumbImg = document.getElementById('wechat-share-thumb') as HTMLImageElement | null
+  if (thumbImg && image) {
+    thumbImg.src = image
+  }
+
+  // 同步更新 link[rel="image_src"]（微信爬虫重要补充）
+  let imageSrcLink = document.querySelector('link[rel="image_src"]') as HTMLLinkElement | null
+  if (!imageSrcLink) {
+    imageSrcLink = document.createElement('link')
+    imageSrcLink.rel = 'image_src'
+    document.head.appendChild(imageSrcLink)
   }
   if (image) {
-    thumbImg.src = image
+    imageSrcLink.href = image
   }
 }
 

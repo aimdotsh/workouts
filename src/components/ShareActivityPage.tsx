@@ -5,6 +5,7 @@ import { formatPace } from '../hooks/useActivities'
 import { MuscleHeatmap, inferMusclesFromItems } from './MuscleHeatmap'
 import { WORKOUT_TYPES } from '../types'
 import { Copy, ArrowLeft, Check, Sparkles } from 'lucide-react'
+import { generateTrackThumbnail } from '../utils/shareMeta'
 
 interface ShareActivityPageProps {
   activity: Activity
@@ -20,6 +21,7 @@ function seededRandom(seed: number) {
 
 export function ShareActivityPage({ activity, allActivities, onBack }: ShareActivityPageProps) {
   const [copied, setCopied] = useState(false)
+  const trackThumb = useMemo(() => generateTrackThumbnail(activity), [activity])
 
   // 1. 解码并生成 GPS 轨迹 Path (若有)
   const trackData = useMemo(() => {
@@ -152,7 +154,14 @@ export function ShareActivityPage({ activity, allActivities, onBack }: ShareActi
   const durationMin = Math.round(parseSecs(activity.moving_time) / 60)
 
   return (
-    <div className="min-h-screen bg-[var(--color-bg)] text-[var(--color-text)] py-6 px-4 flex flex-col items-center select-none animate-in fade-in duration-300 transition-colors">
+    <div className="min-h-screen bg-[var(--color-bg)] text-[var(--color-text)] py-6 px-4 flex flex-col items-center select-none animate-in fade-in duration-300 transition-colors relative">
+      {/* 确保 DOM 正常视口内存在大于 300x300 的真实 <img> 轨迹图片，供 Safari 与微信朋友圈扩展提取缩略图 */}
+      {trackThumb && (
+        <div className="absolute top-0 left-0 w-[300px] h-[300px] overflow-hidden opacity-[0.01] pointer-events-none -z-50">
+          <img src={trackThumb} alt="Workout Track Thumbnail" width={300} height={300} className="w-full h-full object-contain" />
+        </div>
+      )}
+
       {/* Top Floating Control Bar (独立无 Header 干扰) */}
       <div className="w-full max-w-md flex items-center justify-between mb-6 z-20">
         <button
@@ -176,8 +185,17 @@ export function ShareActivityPage({ activity, allActivities, onBack }: ShareActi
       <div className="w-full max-w-md bg-[var(--color-card)] border border-[var(--color-border)] rounded-3xl p-5 shadow-xl space-y-5 relative overflow-hidden transition-colors">
         {/* 1. 顶部 GPS 轨迹 SVG 展示 (若有) */}
         {trackData ? (
-          <div className="relative w-full h-44 flex items-center justify-center bg-[var(--color-bg)]/80 rounded-2xl border border-[var(--color-border)]/60 p-2">
-            <svg viewBox={`0 0 ${trackData.viewW} ${trackData.viewH}`} className="w-full h-full">
+          <div className="relative w-full h-44 flex items-center justify-center bg-[var(--color-bg)]/80 rounded-2xl border border-[var(--color-border)]/60 p-2 overflow-hidden">
+            {trackThumb && (
+              <img
+                src={trackThumb}
+                alt="Track Map Thumbnail"
+                width={300}
+                height={300}
+                className="absolute inset-0 w-full h-full object-contain opacity-0 pointer-events-none"
+              />
+            )}
+            <svg viewBox={`0 0 ${trackData.viewW} ${trackData.viewH}`} className="w-full h-full relative z-10">
               <filter id="shareGlow" x="-20%" y="-20%" width="140%" height="140%">
                 <feGaussianBlur stdDeviation="3" result="blur" />
                 <feComposite in="SourceGraphic" in2="blur" operator="over" />
