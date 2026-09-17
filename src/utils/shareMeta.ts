@@ -83,7 +83,21 @@ export function formatActivityShareMeta(act: Activity, siteTitle = '蓝皮书的
     else weather = '凌晨清爽'
   }
 
+  const mainName = act.name && act.name !== act.type ? act.name : sportName
+  const metricsInTitle = [
+    durStr ? `用时 ${durStr}` : null,
+    paceStr || null,
+    hrStr || null,
+  ].filter(Boolean).join(' · ')
+
+  // 微信聊天专用标准标题 (与图2完全一致: 5.16km Morning Run | 蓝皮书的 Workouts Page)
   const title = `${kmStr}km ${act.name || sportName} | ${siteTitle}`
+
+  // 微信朋友圈专用富标题 (因朋友圈无描述区，将用时配速心率融入标题，两行排满无截断)
+  // 示例: 5.16km Morning Run · 用时 44:33 · 配速 8'38" · 心率 144
+  const timelineTitle = metricsInTitle
+    ? `${kmStr}km ${mainName} · ${metricsInTitle}`
+    : `${kmStr}km ${mainName}`
 
   // 第一行：纯日期与运动类型及里程（紧凑无多余空格与Emoji，绝对不产生意外换行）
   // 示例：2026-09-17 · 跑步 5.16km
@@ -104,7 +118,7 @@ export function formatActivityShareMeta(act: Activity, siteTitle = '蓝皮书的
 
   const description = `${line1}\n${line2}`
 
-  return { title, description }
+  return { title, timelineTitle, description }
 }
 
 /**
@@ -237,10 +251,12 @@ export function generateTrackThumbnail(act: Activity): string | null {
  */
 export function updatePageShareMeta({
   title,
+  timelineTitle,
   description,
-  image = 'https://workouts.liups.com/apple-touch-icon.png',
+  image = 'https://workouts.liups.com/share-cover.png',
 }: {
   title: string
+  timelineTitle?: string
   description: string
   image?: string
 }) {
@@ -322,6 +338,39 @@ export function updatePageShareMeta({
   }
   if (image) {
     imageSrcLink.href = image
+  }
+
+  // 微信内置浏览器专属 WeixinJSBridge 深度适配
+  // 分别绑定“发送给朋友”与“分享到朋友圈”两大动作
+  const tTitle = timelineTitle || title
+  const setupWeixinBridge = () => {
+    const bridge = (window as any).WeixinJSBridge
+    if (!bridge || typeof bridge.on !== 'function') return
+
+    // 1. 微信聊天：发送给朋友 (完全按图2展示: 标题+两行详细描述)
+    bridge.on('menu:share:appmessage', () => {
+      bridge.invoke('sendAppMessage', {
+        title: title,
+        desc: description,
+        link: window.location.href,
+        img_url: image.startsWith('http') ? image : 'https://workouts.liups.com/share-cover.png',
+      })
+    })
+
+    // 2. 微信朋友圈：分享到朋友圈 (朋友圈无desc，标题自动替换为完整运动指标预览，图片使用小于32KB合规封面)
+    bridge.on('menu:share:timeline', () => {
+      bridge.invoke('shareTimeline', {
+        title: tTitle,
+        link: window.location.href,
+        img_url: 'https://workouts.liups.com/share-cover.png',
+      })
+    })
+  }
+
+  if ((window as any).WeixinJSBridge) {
+    setupWeixinBridge()
+  } else {
+    document.addEventListener('WeixinJSBridgeReady', setupWeixinBridge, false)
   }
 }
 

@@ -50,12 +50,13 @@ export default function App() {
       const act = activities.find((a: Activity) => String(a.run_id) === runId)
       if (act) {
         setShareActivity(act)
-        const { title, description } = formatActivityShareMeta(act, defaultSiteTitle)
+        const { title, timelineTitle, description } = formatActivityShareMeta(act, defaultSiteTitle)
         const trackThumb = generateTrackThumbnail(act)
         updatePageShareMeta({
           title,
+          timelineTitle,
           description,
-          image: trackThumb || '/favicon.png',
+          image: trackThumb || 'https://workouts.liups.com/share-cover.png',
         })
         return
       }
