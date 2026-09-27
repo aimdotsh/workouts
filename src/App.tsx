@@ -13,6 +13,7 @@ import { DashboardTheme } from './themes/DashboardTheme'
 import rawActivities from './static/activities.json'
 import siteMetadata from './static/site-metadata'
 import { formatActivityShareMeta, updatePageShareMeta, generateTrackThumbnail } from './utils/shareMeta'
+import { resolveActivityFromUrl } from './utils/activityRoute'
 
 const activities = rawActivities as Activity[]
 
@@ -39,19 +40,22 @@ export default function App() {
     return filtered.filter(a => extractProvince(a.location_country) === selectedProvince)
   }, [filtered, selectedProvince])
 
-  // Listen to URL query params on load (e.g. ?run_id=xxx)
+  // 监听 URL 路由与参数 (支持 /today、/yyyymmdd、?run_id=xxx、?date=xxx)
   useEffect(() => {
-    const params = new URLSearchParams(window.location.search)
-    const runId = params.get('run_id')
     const defaultSiteTitle = siteMetadata.siteTitle || '蓝皮书的 Workouts Page'
     const defaultDesc = '蓝皮书的户外运动与体能数据看板，记录跑步、骑行、徒步等运动轨迹、配速与心率详情。'
 
-    if (runId && activities.length > 0) {
-      const act = activities.find((a: Activity) => String(a.run_id) === runId)
-      if (act) {
-        setShareActivity(act)
-        const { title, timelineTitle, description } = formatActivityShareMeta(act, defaultSiteTitle)
-        const trackThumb = generateTrackThumbnail(act)
+    if (activities.length > 0) {
+      const { activity: matchedAct, notFoundDate } = resolveActivityFromUrl(
+        activities,
+        window.location.pathname,
+        window.location.search
+      )
+
+      if (matchedAct) {
+        setShareActivity(matchedAct)
+        const { title, timelineTitle, description } = formatActivityShareMeta(matchedAct, defaultSiteTitle)
+        const trackThumb = generateTrackThumbnail(matchedAct)
         updatePageShareMeta({
           title,
           timelineTitle,
@@ -59,6 +63,10 @@ export default function App() {
           image: trackThumb || 'https://workouts.liups.com/share-cover.png',
         })
         return
+      }
+
+      if (notFoundDate) {
+        console.warn(`[Workouts] 未找到 ${notFoundDate} 的运动记录`)
       }
     }
 

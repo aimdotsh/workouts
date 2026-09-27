@@ -157,9 +157,12 @@ export function ShareActivityPage({ activity, allActivities, onBack }: ShareActi
     }
   }, [activity])
 
-  // 复制独立微信分享 URL
+  // 复制独立分享 URL (优先使用优雅的 /yyyymmdd 极简日期路径形式)
   const handleCopyShareLink = () => {
-    const shareUrl = `${window.location.origin}${window.location.pathname}?run_id=${activity.run_id}`
+    const actDateStr = (activity.start_date_local || '').slice(0, 10).replace(/-/g, '')
+    const shareUrl = actDateStr
+      ? `${window.location.origin}/${actDateStr}`
+      : `${window.location.origin}/?run_id=${activity.run_id}`
     navigator.clipboard.writeText(shareUrl).then(() => {
       setCopied(true)
       setTimeout(() => setCopied(false), 2500)

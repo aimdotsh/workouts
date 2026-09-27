@@ -4,14 +4,13 @@
     <meta charset="utf-8">
     <title>Redirecting...</title>
     <script>
-      // Get the current path excluding the domain
-      const path = window.location.pathname;
-      // Save it to session storage
-      sessionStorage.setItem('redirect', path);
+      // Get current path with search and hash
+      const fullPath = window.location.pathname + window.location.search + window.location.hash;
+      sessionStorage.setItem('redirect', fullPath);
 
       // Get the base path from the current URL
-      const segments = window.location.pathname.split('/');
-	    const basePath = segments.length > 2 ? '/' + segments[1] : '/';
+      const segments = window.location.pathname.split('/').filter(Boolean);
+      const basePath = '/';
       // Redirect to index.html
       window.location.replace(window.location.origin + basePath);
     </script>
