@@ -56,11 +56,28 @@ export default function App() {
         setShareActivity(matchedAct)
         const { title, timelineTitle, description } = formatActivityShareMeta(matchedAct, defaultSiteTitle)
         const trackThumb = generateTrackThumbnail(matchedAct)
+
+        // 规范化当前分享链接，带上活动唯一 run_id 与版本标记，彻底破坏微信与Safari对相同URL的缩略图强缓存
+        let currentShareUrl = window.location.href
+        try {
+          const u = new URL(window.location.href)
+          if (!u.searchParams.has('run_id')) {
+            u.searchParams.set('run_id', String(matchedAct.run_id))
+          }
+          u.searchParams.set('v', String(matchedAct.run_id))
+          currentShareUrl = u.toString()
+          window.history.replaceState({}, '', currentShareUrl)
+        } catch {
+          // ignore
+        }
+
         updatePageShareMeta({
           title,
           timelineTitle,
           description,
           image: trackThumb || 'https://workouts.liups.com/share-cover.png',
+          shareUrl: currentShareUrl,
+          activityId: matchedAct.run_id,
         })
         return
       }
@@ -101,10 +118,11 @@ export default function App() {
             allActivities={activities}
             onBack={() => {
               setShareActivity(null)
-              window.history.pushState({}, '', window.location.pathname)
+              window.history.pushState({}, '', '/')
               updatePageShareMeta({
                 title: siteMetadata.siteTitle || '蓝皮书的 Workouts Page',
                 description: '蓝皮书的户外运动与体能数据看板，记录跑步、骑行、徒步等运动轨迹、配速与心率详情。',
+                shareUrl: `${window.location.origin}/`,
               })
             }}
           />
@@ -136,7 +154,18 @@ export default function App() {
             dark={dark}
             onShareActivity={(act: Activity) => {
               setShareActivity(act)
-              window.history.pushState({}, '', `?run_id=${act.run_id}`)
+              const actShareUrl = `${window.location.origin}/?run_id=${act.run_id}&v=${act.run_id}`
+              window.history.pushState({}, '', actShareUrl)
+              const { title, timelineTitle, description } = formatActivityShareMeta(act, siteMetadata.siteTitle || '蓝皮书的 Workouts Page')
+              const trackThumb = generateTrackThumbnail(act)
+              updatePageShareMeta({
+                title,
+                timelineTitle,
+                description,
+                image: trackThumb || 'https://workouts.liups.com/share-cover.png',
+                shareUrl: actShareUrl,
+                activityId: act.run_id,
+              })
             }}
           />
         )}

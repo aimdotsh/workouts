@@ -248,17 +248,22 @@ export function generateTrackThumbnail(act: Activity): string | null {
 
 /**
  * 动态更新当前页面 DOM 的 Meta 与 Icon 标签，使 Safari 与微信分享扩展能准确抓取到运动轨迹缩略图与详细摘要
+ * 彻底杜绝微信与 Safari 对同一 URL (如 /today) 缓存上一场历史轨迹缩略图的问题
  */
 export function updatePageShareMeta({
   title,
   timelineTitle,
   description,
   image = 'https://workouts.liups.com/share-cover.png',
+  shareUrl,
+  activityId,
 }: {
   title: string
   timelineTitle?: string
   description: string
   image?: string
+  shareUrl?: string
+  activityId?: string | number
 }) {
   if (typeof document === 'undefined') return
 
@@ -290,39 +295,48 @@ export function updatePageShareMeta({
   setMeta('name', 'twitter:image', image)
 
   // 微信与 Safari 嗅探优先：确保 DOM 最顶层存在一张标准尺寸（>=300x300）的真实 <img> 标签
-  // 关键：不能使用负坐标（如 left: -9999px 会被微信朋友圈安全机制直接判定为作弊隐藏图抛弃），
-  // 必须位于正常屏幕视口区域 (0, 0) 内，通过底层 z-index 确保不干扰交互与 UI。
-  let thumbContainer = document.getElementById('wechat-share-thumb-wrap') as HTMLDivElement | null
-  if (!thumbContainer) {
-    thumbContainer = document.createElement('div')
-    thumbContainer.id = 'wechat-share-thumb-wrap'
-    thumbContainer.style.position = 'absolute'
-    thumbContainer.style.top = '0'
-    thumbContainer.style.left = '0'
-    thumbContainer.style.width = '0'
-    thumbContainer.style.height = '0'
-    thumbContainer.style.overflow = 'hidden'
-
-    const thumbImg = document.createElement('img')
-    thumbImg.id = 'wechat-share-thumb'
-    thumbImg.width = 300
-    thumbImg.height = 300
-    thumbImg.style.display = 'block'
-    thumbImg.style.width = '300px'
-    thumbImg.style.height = '300px'
-    thumbImg.alt = 'Share Thumbnail'
-    thumbContainer.appendChild(thumbImg)
-
-    if (document.body.firstChild) {
-      document.body.insertBefore(thumbContainer, document.body.firstChild)
-    } else {
-      document.body.appendChild(thumbContainer)
-    }
+  // 关键防缓存设计：每次更新活动时彻底移除旧容器并重新创建全新带唯一标识的 <img> 节点，
+  // 强迫微信 WebView 嗅探器放弃旧的 DOM 引用重新提取当前活动缩略图。
+  const oldThumbWrap = document.getElementById('wechat-share-thumb-wrap')
+  if (oldThumbWrap) {
+    oldThumbWrap.remove()
   }
 
-  const thumbImg = document.getElementById('wechat-share-thumb') as HTMLImageElement | null
-  if (thumbImg && image) {
+  const thumbContainer = document.createElement('div')
+  thumbContainer.id = 'wechat-share-thumb-wrap'
+  thumbContainer.style.position = 'absolute'
+  thumbContainer.style.top = '0'
+  thumbContainer.style.left = '0'
+  thumbContainer.style.width = '0'
+  thumbContainer.style.height = '0'
+  thumbContainer.style.overflow = 'hidden'
+
+  const thumbImg = document.createElement('img')
+  thumbImg.id = 'wechat-share-thumb'
+  thumbImg.width = 300
+  thumbImg.height = 300
+  thumbImg.style.display = 'block'
+  thumbImg.style.width = '300px'
+  thumbImg.style.height = '300px'
+  thumbImg.alt = 'Share Thumbnail'
+  if (activityId) {
+    thumbImg.setAttribute('data-activity-id', String(activityId))
+  }
+  if (image) {
     thumbImg.src = image
+  }
+  thumbContainer.appendChild(thumbImg)
+
+  if (document.body.firstChild) {
+    document.body.insertBefore(thumbContainer, document.body.firstChild)
+  } else {
+    document.body.appendChild(thumbContainer)
+  }
+
+  // 同步替换 index.html 中的初始静态占位图，杜绝微信爬虫抓到旧占位图
+  const staticCover = document.querySelector('img[alt="Workouts Share Cover"]') as HTMLImageElement | null
+  if (staticCover && image) {
+    staticCover.src = image
   }
 
   // 同步更新 link[rel="image_src"]（微信爬虫重要补充）
@@ -339,26 +353,28 @@ export function updatePageShareMeta({
   // 微信内置浏览器专属 WeixinJSBridge 深度适配
   // 分别绑定“发送给朋友”与“分享到朋友圈”两大动作
   const tTitle = timelineTitle || title
+  const finalLink = shareUrl || (typeof window !== 'undefined' ? window.location.href : 'https://workouts.liups.com')
+
   const setupWeixinBridge = () => {
     const bridge = (window as any).WeixinJSBridge
     if (!bridge || typeof bridge.on !== 'function') return
 
-    // 1. 微信聊天：发送给朋友 (完全按图2展示: 标题+两行详细描述)
+    // 1. 微信聊天：发送给朋友 (完全按图2展示: 标题+两行详细描述，图片传递最新渲染的高清轨迹)
     bridge.on('menu:share:appmessage', () => {
       bridge.invoke('sendAppMessage', {
         title: title,
         desc: description,
-        link: window.location.href,
-        img_url: image.startsWith('http') ? image : 'https://workouts.liups.com/share-cover.png',
+        link: finalLink,
+        img_url: image || 'https://workouts.liups.com/share-cover.png',
       })
     })
 
-    // 2. 微信朋友圈：分享到朋友圈 (朋友圈无desc，标题自动替换为完整运动指标预览，图片使用小于32KB合规封面)
+    // 2. 微信朋友圈：分享到朋友圈 (朋友圈无desc，标题自动替换为完整运动指标预览，图片传递最新渲染的高清轨迹)
     bridge.on('menu:share:timeline', () => {
       bridge.invoke('shareTimeline', {
         title: tTitle,
-        link: window.location.href,
-        img_url: 'https://workouts.liups.com/share-cover.png',
+        link: finalLink,
+        img_url: image || 'https://workouts.liups.com/share-cover.png',
       })
     })
   }
