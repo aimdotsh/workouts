@@ -204,7 +204,7 @@ export function RouteMap({
     })
 
     const count = targetSet.length
-    const avgDistKm = count > 0 ? (totalDist / 1000 / count).toFixed(1) : '0.0'
+    const avgDistKm = count > 0 ? formatKm(totalDist / count, 2) : '0.00'
 
     return {
       title,
@@ -214,14 +214,14 @@ export function RouteMap({
       countryCount: countries.size,
       provinceCount: provinces.size,
       cityCount: cities.size,
-      totalDistKm: (totalDist / 1000).toFixed(1),
+      totalDistKm: formatKm(totalDist, 2),
       avgDistKm,
       runCount,
-      runDistKm: (runDist / 1000).toFixed(1),
+      runDistKm: formatKm(runDist, 2),
       rideCount,
-      rideDistKm: (rideDist / 1000).toFixed(1),
+      rideDistKm: formatKm(rideDist, 2),
       hikeCount,
-      hikeDistKm: (hikeDist / 1000).toFixed(1),
+      hikeDistKm: formatKm(hikeDist, 2),
     }
   }, [activities, allActivities, selectedYear, selectedSport])
 
@@ -447,7 +447,7 @@ export function RouteMap({
             Overview
           </button>
           <div className="px-2.5 py-1 bg-[var(--color-accent)] text-white text-[11px] font-medium rounded-full shadow-md animate-pulse">
-            📍 {selectedActivity.name || selectedActivity.type} ({(selectedActivity.distance / 1000).toFixed(1)}km)
+            📍 {selectedActivity.name || selectedActivity.type} ({formatKm(selectedActivity.distance, 2)}km)
           </div>
         </div>
       ) : null}

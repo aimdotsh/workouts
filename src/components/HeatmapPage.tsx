@@ -127,7 +127,7 @@ function MonthGrid({ yr, month, acts, max, filter, onSelectActivity }: {
                   : ''
               }`}
               style={{ backgroundColor: info ? color : day ? 'var(--color-border)' : 'transparent', opacity: day ? 1 : 0 }}
-              title={info ? `${yr}-${String(month+1).padStart(2,'0')}-${String(day).padStart(2,'0')}: ${(info.distance/1000).toFixed(1)}km` : undefined}
+              title={info ? `${yr}-${String(month+1).padStart(2,'0')}-${String(day).padStart(2,'0')}: ${formatKm(info.distance, 2)}km` : undefined}
             />
           )
         })}

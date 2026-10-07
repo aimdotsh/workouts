@@ -628,7 +628,7 @@ export function ContributionHeatmap({ activities, year: defaultYear, filter, onS
                         : isGym ? `${day.date}: ${day.distance} session(s)`
                         : day.domType === 'Training'
                           ? `${day.date}: ${Math.round(day.timeSecs / 60)}min`
-                          : `${day.date}: ${(day.activities.reduce((s, a) => s + a.distance, 0) / 1000).toFixed(1)} km`
+                          : `${day.date}: ${formatKm(day.activities.reduce((s, a) => s + a.distance, 0), 2)} km`
                       return (
                         <rect
                           key={`${wi}-${di}`}

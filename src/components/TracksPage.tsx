@@ -147,7 +147,7 @@ function TrackThumb({ activity, color, selected, onClick }: {
     <div
       className={`cursor-pointer group relative rounded transition-all ${selected ? 'ring-2 ring-[var(--color-accent)] ring-offset-1 ring-offset-[var(--color-bg)]' : ''}`}
       onClick={onClick}
-      title={`${activity.name} — ${(activity.distance / 1000).toFixed(1)} km`}
+      title={`${activity.name} — ${formatKm(activity.distance, 2)} km`}
     >
       <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`}
         className={`transition-opacity ${selected ? 'opacity-100' : 'group-hover:opacity-100 opacity-60'}`}>
@@ -223,7 +223,7 @@ function TrackMap({ activity, activities = [], allActivities = [], selectedYear,
     })
 
     const count = targetSet.length
-    const avgDistKm = count > 0 ? (totalDist / 1000 / count).toFixed(1) : '0.0'
+    const avgDistKm = count > 0 ? formatKm(totalDist / count, 2) : '0.00'
 
     return {
       title,
@@ -233,14 +233,14 @@ function TrackMap({ activity, activities = [], allActivities = [], selectedYear,
       countryCount: countries.size,
       provinceCount: provinces.size,
       cityCount: cities.size,
-      totalDistKm: (totalDist / 1000).toFixed(1),
+      totalDistKm: formatKm(totalDist, 2),
       avgDistKm,
       runCount,
-      runDistKm: (runDist / 1000).toFixed(1),
+      runDistKm: formatKm(runDist, 2),
       rideCount,
-      rideDistKm: (rideDist / 1000).toFixed(1),
+      rideDistKm: formatKm(rideDist, 2),
       hikeCount,
-      hikeDistKm: (hikeDist / 1000).toFixed(1),
+      hikeDistKm: formatKm(hikeDist, 2),
     }
   }, [activities, allActivities, selectedYear, selectedSport])
 
