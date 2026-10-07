@@ -78,6 +78,18 @@ export function formatDistance(meters: number): string {
   return Math.round(meters / 1000).toString()
 }
 
+/**
+ * 将米数格式化为公里数字符串，采用与高驰/佳明等运动手表严格一致的向下截断模式 (Floor / Truncation)
+ * 跑满 10 米才计入 0.01 公里，未跑满目标距离绝不四舍五入提前进位 (如 10077.53m -> 10.07km)
+ */
+export function formatKm(meters: number, precision = 2): string {
+  if (!meters || meters <= 0) return (0).toFixed(precision)
+  const km = meters / 1000
+  const factor = Math.pow(10, precision)
+  const floored = Math.floor(km * factor + 1e-9) / factor
+  return floored.toFixed(precision)
+}
+
 export function formatPace(speedMs: number): string {
   if (!speedMs) return '--'
   const paceMin = 1000 / 60 / speedMs

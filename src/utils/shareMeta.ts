@@ -1,11 +1,12 @@
 import * as polyline from '@mapbox/polyline'
 import type { Activity } from '../types'
+import { formatKm } from '../hooks/useActivities'
 
 /**
  * 将活动数据格式化为微信/Safari分享卡片所需的标题与详细摘要信息
  */
 export function formatActivityShareMeta(act: Activity, siteTitle = '蓝皮书的 Workouts Page') {
-  const kmStr = (act.distance / 1000).toFixed(2)
+  const kmStr = formatKm(act.distance, 2)
   const sportName = act.type === 'Run' ? '跑步'
     : act.type === 'Ride' ? '骑行'
     : act.type === 'Hike' ? '徒步' : '运动'

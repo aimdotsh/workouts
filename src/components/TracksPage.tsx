@@ -2,7 +2,7 @@ import { useMemo, useState, useEffect, useRef } from 'react'
 import { toPng } from 'html-to-image'
 import * as polyline from '@mapbox/polyline'
 import type { Activity } from '../types'
-import { getAvailableYears, formatDistance, parseMovingTime, formatPace, extractProvince } from '../hooks/useActivities'
+import { getAvailableYears, formatDistance, parseMovingTime, formatPace, extractProvince, formatKm } from '../hooks/useActivities'
 import { useLocale } from '../hooks/useLocale'
 import { BrandingBar } from './BrandingBar'
 
@@ -603,7 +603,7 @@ export function TracksPage({ activities, filter, onBack, onSelectActivity, dark 
               <div className="grid grid-cols-3 gap-2">
                 <div>
                   <p className="text-[9px] text-[var(--color-muted)] uppercase tracking-wider">{locale === 'zh' ? '距离' : 'Distance'}</p>
-                  <p className="text-base font-bold font-mono leading-tight">{(selectedActivity.distance / 1000).toFixed(2)} <span className="text-[10px] font-normal text-[var(--color-muted)]">km</span></p>
+                  <p className="text-base font-bold font-mono leading-tight">{formatKm(selectedActivity.distance, 2)} <span className="text-[10px] font-normal text-[var(--color-muted)]">km</span></p>
                 </div>
                 <div>
                   <p className="text-[9px] text-[var(--color-muted)] uppercase tracking-wider">{locale === 'zh' ? '时间' : 'Time'}</p>

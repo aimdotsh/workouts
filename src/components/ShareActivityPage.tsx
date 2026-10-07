@@ -2,7 +2,7 @@ import { useMemo, useState, useRef } from 'react'
 import * as polyline from '@mapbox/polyline'
 import { toPng } from 'html-to-image'
 import type { Activity } from '../types'
-import { formatPace } from '../hooks/useActivities'
+import { formatPace, formatKm } from '../hooks/useActivities'
 import { MuscleHeatmap, inferMusclesFromItems } from './MuscleHeatmap'
 import { WORKOUT_TYPES } from '../types'
 import { Copy, ArrowLeft, Check, Sparkles, Image as ImageIcon, X, Download } from 'lucide-react'
@@ -173,7 +173,7 @@ export function ShareActivityPage({ activity, allActivities, onBack }: ShareActi
   // 仅保留干净日期只保留 YYYY-MM-DD
   const cleanDateOnly = activity.start_date_local.slice(0, 10)
 
-  const kmVal = (activity.distance / 1000).toFixed(2)
+  const kmVal = formatKm(activity.distance, 2)
   const paceStr = activity.type === 'Run' ? formatPace(activity.average_speed) : `${(activity.average_speed * 3.6).toFixed(1)} km/h`
   const durationMin = Math.round(parseSecs(activity.moving_time) / 60)
 

@@ -1,7 +1,7 @@
 import { useMemo, useState, useEffect, useRef } from 'react'
 import * as polyline from '@mapbox/polyline'
 import type { Activity } from '../types'
-import { extractProvince } from '../hooks/useActivities'
+import { extractProvince, formatKm } from '../hooks/useActivities'
 import { WORKOUT_TYPES } from '../types'
 import { MuscleHeatmap, inferMusclesFromItems } from './MuscleHeatmap'
 
@@ -366,7 +366,7 @@ export function RouteMap({
   // 2. 无轨迹的其他户外/健走/跑步记录（如 走日坛公园、北京站）：呈现精美的运动指标高光卡片
   if (hasNoRoute && selectedActivity) {
     const icon = selectedActivity.type === 'Run' ? '🏃' : selectedActivity.type === 'Ride' ? '🚴' : selectedActivity.type === 'Hike' ? '🥾' : '👟'
-    const distKm = (selectedActivity.distance / 1000).toFixed(2)
+    const distKm = formatKm(selectedActivity.distance, 2)
     const sportName = selectedActivity.type === 'Run' ? '跑步' : selectedActivity.type === 'Ride' ? '骑行' : selectedActivity.type === 'Hike' ? '健走/徒步' : '运动'
 
     return (
@@ -582,7 +582,7 @@ export function RouteMap({
             {selectedActivity.name || selectedActivity.type}
           </span>
           <span className="font-mono bg-[var(--color-card)]/80 backdrop-blur-sm px-2 py-0.5 rounded border border-[var(--color-border)]/50">
-            {(selectedActivity.distance / 1000).toFixed(2)} km
+            {formatKm(selectedActivity.distance, 2)} km
           </span>
         </div>
       )}
