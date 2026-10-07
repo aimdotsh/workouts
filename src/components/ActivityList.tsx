@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import type { Activity } from '../types'
-import { formatDistance, formatDuration, formatPace } from '../hooks/useActivities'
+import { formatDuration, formatPace, formatKm } from '../hooks/useActivities'
 
 interface ActivityListProps {
   activities: Activity[]
@@ -89,7 +89,7 @@ export function ActivityList({ activities }: ActivityListProps) {
                     </span>
                   </td>
                   <td className="py-2 font-mono">
-                    {formatDistance(a.distance)} km
+                    {formatKm(a.distance, 2)} km
                   </td>
                   <td className="py-2">{formatDuration(a.moving_time)}</td>
                   <td className="py-2 font-mono">
@@ -121,7 +121,7 @@ function ActivityCard({ activity: a }: { activity: Activity }) {
         </span>
       </div>
       <p className="text-2xl font-bold font-mono mb-1">
-        {formatDistance(a.distance)}{' '}
+        {formatKm(a.distance, 2)}{' '}
         <span className="text-sm font-normal text-[var(--color-muted)]">km</span>
       </p>
       <div className="flex gap-3 text-xs text-[var(--color-muted)]">

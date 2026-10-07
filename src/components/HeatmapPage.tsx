@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react'
 import type { Activity, SportFilter } from '../types'
-import { getAvailableYears, formatDistance, parseMovingTime, formatPace } from '../hooks/useActivities'
+import { getAvailableYears, formatDistance, parseMovingTime, formatPace, formatKm } from '../hooks/useActivities'
 import { useLocale } from '../hooks/useLocale'
 import { BrandingBar } from './BrandingBar'
 
@@ -233,7 +233,7 @@ export function HeatmapPage({ activities, filter, onSelectActivity, onBack }: He
                   </span>
                   <span className="flex items-center gap-1">
                     <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" /></svg>
-                    {formatDistance(stats.distance)} km
+                    {formatKm(stats.distance, 2)} km
                   </span>
                   <span className="flex items-center gap-1">
                     <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
@@ -277,7 +277,7 @@ export function HeatmapPage({ activities, filter, onSelectActivity, onBack }: He
                               key={di}
                               className="w-3 h-3 rounded-sm transition-colors hover:ring-1 hover:ring-[var(--color-muted)] cursor-pointer"
                               style={{ backgroundColor: getColor(day.distance, max, filter) }}
-                              title={`${day.date}: ${(day.distance / 1000).toFixed(1)} km`}
+                              title={`${day.date}: ${formatKm(day.distance, 2)} km`}
                               onClick={() => { if (day.activities.length > 0) onSelectActivity?.(day.activities[0]) }}
                             />
                           ))}

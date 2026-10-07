@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import type { Activity, SportFilter } from '../types'
 import { WORKOUT_TYPES } from '../types'
-import { formatDuration, formatPace } from '../hooks/useActivities'
+import { formatDuration, formatPace, formatKm } from '../hooks/useActivities'
 import { useLocale } from '../hooks/useLocale'
 import { WorkoutDetailModal } from './WorkoutDetailModal'
 import { Share2 } from 'lucide-react'
@@ -262,7 +262,7 @@ export function ActivityLog({ activities, years, year, setYear, selectedActivity
                   ) : (
                     <>
                       <p className="text-xs font-mono font-bold text-[var(--color-accent)]">
-                        {(a.distance / 1000).toFixed(1)} <span className="text-[10px] font-normal text-[var(--color-muted)]">km</span>
+                        {formatKm(a.distance, 2)} <span className="text-[10px] font-normal text-[var(--color-muted)]">km</span>
                       </p>
                       <p className="text-[10px] text-[var(--color-muted)] font-mono mt-0.5">
                         {formatDuration(a.moving_time)} · {a.type === 'Run' ? formatPace(a.average_speed) : `${(a.average_speed * 3.6).toFixed(1)}km/h`}
@@ -348,7 +348,7 @@ export function ActivityLog({ activities, years, year, setYear, selectedActivity
                   ) : (
                     <>
                       <td className="py-3 font-mono font-medium whitespace-nowrap">
-                        {(a.distance / 1000).toFixed(1)}<span className="text-[var(--color-muted)] ml-1 font-normal text-xs">km</span>
+                        {formatKm(a.distance, 2)}<span className="text-[var(--color-muted)] ml-1 font-normal text-xs">km</span>
                       </td>
                       <td className="py-3 text-[var(--color-muted)] font-mono whitespace-nowrap">{formatDuration(a.moving_time)}</td>
                       <td className="py-3 text-[var(--color-muted)] font-mono whitespace-nowrap">

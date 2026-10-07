@@ -3,7 +3,7 @@ import { RefreshCw, CheckCircle, XCircle, Clock, Loader, Route } from 'lucide-re
 import type { Activity, SportFilter } from '../types'
 import { useLocale } from '../hooks/useLocale'
 import { useGitHubAuthContext } from '../hooks/useGitHubAuthContext'
-import { formatDistance, parseMovingTime, extractProvince } from '../hooks/useActivities'
+import { formatDistance, parseMovingTime, extractProvince, formatKm } from '../hooks/useActivities'
 import rawConfig from '@config'
 
 const config = rawConfig as { repoOwner?: string; repoName?: string }
@@ -273,7 +273,7 @@ export function ProfileCard({ activities, filter = 'all' }: ProfileCardProps) {
           <p className="text-sm font-medium">
             {latest.type === 'Run' ? '🏃 ' : latest.type === 'Ride' ? '🚴 ' : '🏋️ '}
             {latest.name || (latest.type === 'Run' ? 'Run' : 'Ride')}
-            <span className="text-[var(--color-muted)] font-normal"> · {formatDistance(latest.distance)} km · {formatDate(latest.start_date_local)}</span>
+            <span className="text-[var(--color-muted)] font-normal"> · {formatKm(latest.distance, 2)} km · {formatDate(latest.start_date_local)}</span>
           </p>
         </div>
       )}

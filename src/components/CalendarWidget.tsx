@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react'
 import type { Activity } from '../types'
-import { formatDistance } from '../hooks/useActivities'
+import { formatKm } from '../hooks/useActivities'
 import { useLocale } from '../hooks/useLocale'
 
 interface CalendarWidgetProps {
@@ -80,7 +80,7 @@ export function CalendarWidget({ activities, onSelectActivity }: CalendarWidgetP
         <div>
           <span className="text-lg font-bold">{monthStr}</span>
           <span className="text-sm text-[var(--color-muted)] ml-3">
-            {formatDistance(monthDistance)} km
+            {formatKm(monthDistance, 2)} km
           </span>
         </div>
         <div className="flex items-center gap-2">
@@ -144,7 +144,7 @@ export function CalendarWidget({ activities, onSelectActivity }: CalendarWidgetP
       {/* Summary */}
       <div className="mt-3 pt-3 border-t border-[var(--color-border)] flex items-center justify-between text-xs text-[var(--color-muted)]">
         <span>{monthCount} {t('calendarActivities')}</span>
-        <span>{formatDistance(monthDistance)} km</span>
+        <span>{formatKm(monthDistance, 2)} km</span>
       </div>
     </div>
   )

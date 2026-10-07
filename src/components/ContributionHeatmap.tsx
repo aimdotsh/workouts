@@ -2,7 +2,7 @@ import { useMemo, useRef, useState, useEffect } from 'react'
 import { toPng } from 'html-to-image'
 import type { Activity, SportFilter } from '../types'
 import { WORKOUT_TYPES } from '../types'
-import { getAvailableYears, formatDistance, parseMovingTime } from '../hooks/useActivities'
+import { getAvailableYears, parseMovingTime, formatKm } from '../hooks/useActivities'
 import { useLocale } from '../hooks/useLocale'
 import { BrandingBar } from './BrandingBar'
 
@@ -565,7 +565,7 @@ export function ContributionHeatmap({ activities, year: defaultYear, filter, onS
                     })
                     .map(([type, v]) => (
                       <span key={type} className="text-xs text-[var(--color-muted)]">
-                        · {typeIcon(type)} {(v.distance / 1000).toFixed(1)} km
+                        · {typeIcon(type)} {formatKm(v.distance, 2)} km
                       </span>
                     ))}
                 </div>
@@ -699,7 +699,7 @@ export function ContributionHeatmap({ activities, year: defaultYear, filter, onS
                 })
                 .map(([type, v]) => (
                   <span key={type} className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-[var(--color-bg)] border border-[var(--color-border)]/60 whitespace-nowrap text-[11px]">
-                    {typeIcon(type)} {(v.distance / 1000).toFixed(1)} km
+                    {typeIcon(type)} {formatKm(v.distance, 2)} km
                   </span>
                 ))}
 
@@ -717,7 +717,7 @@ export function ContributionHeatmap({ activities, year: defaultYear, filter, onS
               {!isGym && currStats.distance > 0 && (
                 <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-[var(--color-bg)] border border-[var(--color-border)]/60 whitespace-nowrap font-bold text-[var(--color-text)]">
                   <svg className="w-3.5 h-3.5 text-[var(--color-accent)]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" /></svg>
-                  {formatDistance(currStats.distance)} km
+                  {formatKm(currStats.distance, 2)} km
                 </span>
               )}
             </div>
