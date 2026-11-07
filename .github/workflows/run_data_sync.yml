@@ -44,6 +44,8 @@ jobs:
   sync:
     name: Sync Workout Data
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
 
     steps:
       - name: Checkout
@@ -136,5 +138,9 @@ jobs:
           git config --local user.email "action@github.com"
           git config --local user.name "GitHub Action"
           git add .
-          git commit -m "sync: update workouts data [$(date +'%Y-%m-%d %H:%M:%S')]" || echo "nothing to commit"
-          git push origin ${GITHUB_REF#refs/heads/} || echo "nothing to push"
+          if ! git diff --staged --quiet; then
+            git commit -m "sync: update workouts data [$(date +'%Y-%m-%d %H:%M:%S')]"
+            git push origin ${GITHUB_REF#refs/heads/}
+          else
+            echo "nothing to commit"
+          fi
