@@ -13,4 +13,9 @@ export default defineConfig({
       '@config': path.resolve(__dirname, 'config.yml'),
     },
   },
+  build: {
+    rollupOptions: {
+      maxParallelFileOps: 20,
+    },
+  },
 })
