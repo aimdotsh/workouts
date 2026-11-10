@@ -8,10 +8,11 @@ export default defineConfig({
   base: process.env.PATH_PREFIX ? `${process.env.PATH_PREFIX}/` : '/',
   plugins: [react(), tailwindcss(), yaml()],
   resolve: {
-    alias: {
-      '@': '/src',
-      '@config': path.resolve(__dirname, 'config.yml'),
-    },
+    alias: [
+      { find: '@', replacement: '/src' },
+      { find: '@config', replacement: path.resolve(__dirname, 'config.yml') },
+      { find: /^lucide-react$/, replacement: path.resolve(__dirname, 'src/utils/lucide-shim.ts') },
+    ],
   },
   build: {
     rollupOptions: {
